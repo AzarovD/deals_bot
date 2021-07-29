@@ -8,8 +8,8 @@ def get_deals(user_id):
     response = requests.request("GET", url, headers=headers)
     deals = json.loads(response.text)
     message_text = ""
-    for deal  in deals:
-        message_text += f"Название: {deal['Title']}\n" \
+    for number, deal in enumerate(deals):
+        message_text += f"{number+1}. Название: {deal['Title']}\n" \
                        f"Описание: {deal['Description']}\n {'-'*30}\n"
     if message_text == "":
         message_text = "У вас пока нет дел"
