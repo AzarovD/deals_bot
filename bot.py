@@ -19,8 +19,10 @@ def greetings(message):
     if message.text == "Привет" or message.text == "/start":
         bot.send_message(message.from_user.id, f"Привет, {message.from_user.first_name}, здесь ты можешь создать список дел")
     elif message.text == "Что ты умеешь?":
-        bot.send_message(message.from_user.id, "Я умею все")
-    
+        bot.send_message(message.from_user.id, "Я умею всё")
+    else:
+        bot.send_message(message.from_user.id, "Я не знаю такой команды")
+	
 
     if message.reply_to_message:
         if message.reply_to_message.message_id == reply_messages[message.from_user.id]:
