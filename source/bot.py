@@ -5,7 +5,7 @@ from database import *
 
 bot = telebot.TeleBot(bot_token)
 
-reply_messages = {}   # user_id : message for reply
+reply_messages = {}
 users_answers = {}
 
 def show_main_keyboard(user_id):
@@ -23,16 +23,27 @@ def greetings(message):
     if message.reply_to_message:
         if message.reply_to_message.message_id == reply_messages[message.from_user.id]['message'].message_id:
             if reply_messages[message.from_user.id]['theme'] == 'title':
-                users_answers[message.from_user.id]['title'] = message.text
-                ask_deal_description(message)
+                if reply_messages[message.from_user.id]['action'] == 'add':
+                    users_answers[message.from_user.id]['title'] = message.text
+                    ask_deal_description(message, 'add')
+
+                elif reply_messages[message.from_user.id]['action'] == 'edit':
+                    users_answers[message.from_user.id]['title'] = message.text
+                    ask_deal_description(message, 'edit')
             
             elif reply_messages[message.from_user.id]['theme'] == 'description':
-                users_answers[message.from_user.id]['description'] = message.text
-                send_ok = send_deal(message.from_user.id, users_answers[message.from_user.id]['title'], users_answers[message.from_user.id]['description'])
-                if send_ok:
-                    bot.send_message(message.from_user.id, "Дело успешно добавлено")
-                else:
-                    bot.send_message(message.from_user.id, "Произошлая ошибка. Попробуйте позже")
+                if reply_messages[message.from_user.id]['action'] == 'add':
+                    users_answers[message.from_user.id]['description'] = message.text
+                    send_ok = send_deal(message.from_user.id, users_answers[message.from_user.id]['title'], users_answers[message.from_user.id]['description'])
+                    if send_ok:
+                        bot.send_message(message.from_user.id, "Дело успешно добавлено")
+                    else:
+                        bot.send_message(message.from_user.id, "Произошлая ошибка. Попробуйте позже")
+
+                elif reply_messages[message.from_user.id]['action'] == 'edit':
+                    users_answers[message.from_user.id]['description'] = message.text
+                    edit_deal(users_answers[message.from_user.id]['edit_deal_id'], users_answers[message.from_user.id]['title'],
+                              users_answers[message.from_user.id]['description'])
             
             elif reply_messages[message.from_user.id]['theme'] == 'delete':
                 if message.text.isdigit:
@@ -59,7 +70,7 @@ def callback_inline(call):
     elif call.data == "create_deal":
         users_answers.update({call.from_user.id:{'title':None, 'description':None}})
         print(users_answers)
-        ask_deal_title(call)
+        ask_deal_title(call, 'add')
     
     elif call.data == "delete_deal":
         bot_message = get_deals(call.from_user.id)[0]
@@ -70,19 +81,23 @@ def callback_inline(call):
         else:
             msg = bot.send_message(call.from_user.id, "Выберите номер удаляемого дела")
             reply_messages.update({call.from_user.id:{'message':msg, 'theme':'delete'}})
-    
+
     elif call.data == "edit_deal":
         bot.send_message(call.from_user.id, text="Выберите дело для редактирования", reply_markup=deals_for_edit_keyboard(call.from_user.id))
-            
+
+    elif call.data in get_deals_id(call.from_user.id):
+        users_answers.update({call.from_user.id:{'title': None, 'description': None, 'edit_deal_id': call.data}})
+        ask_deal_title(call, 'edit')
 
 
-def ask_deal_title(call):
+
+def ask_deal_title(call, action):
     msg = bot.send_message(call.from_user.id, "Введите название дела. \nНеобходимо ответить на данное сообщение")
-    reply_messages.update({call.from_user.id:{'message': msg, 'theme': 'title'}})
+    reply_messages.update({call.from_user.id:{'message': msg, 'theme': 'title', 'action':f'{action}'}})
 
-def ask_deal_description(call):
+def ask_deal_description(call, action):
     msg = bot.send_message(call.from_user.id, "Введите описание дела. \nНеобходимо ответить на данное сообщение")
-    reply_messages.update({call.from_user.id:{'message': msg, 'theme': 'description'}})
+    reply_messages.update({call.from_user.id:{'message': msg, 'theme': 'description', 'action':f'{action}'}})
 
 bot.polling(none_stop=True, interval=0)
 

@@ -5,6 +5,13 @@ from requests.api import delete
 from bot_config import *
 
 
+def get_deals_id(user_id):
+    url = "https://dealsbot-0be1.restdb.io/rest/deals?q={}&filter=" + str(user_id)
+    response = requests.request("GET", url, headers=headers)
+    deals = json.loads(response.text)
+    deal_ids = [list(deal.values())[0] for deal in deals]
+    return deal_ids
+    
 
 def get_deals(user_id):
     url = "https://dealsbot-0be1.restdb.io/rest/deals?q={}&filter=" + str(user_id)
@@ -46,4 +53,11 @@ def delete_deal(deal_number, user_id):
             return False
     else:
         return False
+
+
+def edit_deal(edit_deal_id, title, description):
+    url = f"https://dealsbot-0be1.restdb.io/rest/deals/{edit_deal_id}"
+    payload = json.dumps({"Title": title, "Description": description})
+    response = requests.request("PUT", url, data=payload, headers=headers)
+    print(response.text)
 
